@@ -2,7 +2,9 @@
   <div id="Home">
     <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
 
-    <scroll>
+    <scroll class="content" ref="scroll" 
+    :probe-type="3" :pull-up-load='true'
+    @scroll="contentScroll" @pullingUp="loadMore">
       <home-swiper :banners="banners"/>
       <recommend-view :recommends="recommends" />
       <feature-view/>
@@ -13,7 +15,7 @@
     </scroll>
     
 
-    
+    <back-top @click.native="backClick" v-show="isShowBackTop"/>
   </div>
 </template>
 
@@ -27,6 +29,7 @@
   import TabControl from 'components/content/tabControl/TabControl';
   import GoodsList from 'components/content/goods/GoodsList';
   import Scroll from 'components/common/scroll/Scroll';
+  import BackTop from 'components/content/backTop/BackTop';
 
   import { getHomeMultidata, getHomeGoods } from "network/home";
   
@@ -41,7 +44,8 @@
       NavBar,
       TabControl,
       GoodsList,
-      Scroll
+      Scroll,
+      BackTop
     },
 
     data() {
@@ -54,6 +58,7 @@
           'sell': { page:0, list: [] }  // 精选
         },
         currentType: 'pop',
+        isShowBackTop: false
       }
     },
 
@@ -88,7 +93,19 @@
             break;
         }
       },
+      // 回到顶部点击
+      backClick() {
+        this.$refs.scroll.scrollTo(0, 0, 1000); 
+      },
+      // 回到顶部图标的显示和隐藏
+      contentScroll(position) {
+        this.isShowBackTop = ( -position.y ) > 1000 ? true : false;
+      },
 
+      //
+      loadMore() {
+        this.getHomeGoods(this.currentType);
+      },
 
       // 网络请求相关方法
       getHomeMultidata() {
@@ -105,6 +122,7 @@
           this.goods[type].page += 1
 
           // console.log(this.goods[type].list);
+          this.$refs.scroll.finishPullUp();
         })
       }
       
@@ -115,6 +133,8 @@
 <style scoped>
   #Home{
     padding-top: 44px;
+    height: 100vh;
+    position: relative;
   }
 
   .home-nav {
@@ -133,4 +153,22 @@
     top: 44px;
     z-index: 9;
   }
+
+
+  .content {
+    overflow: hidden;
+
+    position: absolute;
+    top: 44px;
+    bottom: 49px;
+    left: 0;
+    right: 0;
+  }
+
+  /* .content {
+    height: calc(100% - 93px);
+    height: 100%;
+    overflow: hidden;
+    margin-top: 44px;
+  } */
 </style>
