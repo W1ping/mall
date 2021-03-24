@@ -1,0 +1,121 @@
+@import "./normalize.css";
+
+/* :root -> 获取根元素 html */
+:root {
+  --color-text: #666;
+  --color-high-text: #ff5777;
+  --color-tint: #ff8198;
+  --color-background: #fff;
+  --font-size: 14px;
+  --line-height: 1.5;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+ 
+ 
+html,body{
+  height: 100%;
+  width: 100%;
+}
+body{
+  margin: 0;
+  line-height: 1.5;
+  font-family:"微软雅黑","黑体","宋体";
+}
+ 
+/*语义化标签*/
+article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
+  display: block;
+}
+ 
+div,
+h1, h2, h3, h4, h5, h6,
+ul, ol, dl, li, dt, dd,
+p,
+blockquote,
+pre,
+form,
+fieldset,
+table, th, td,
+input,
+button,
+optgroup,
+textarea,
+fieldset{
+  margin: 0;
+  padding: 0;
+}
+ 
+li{
+  list-style: none;
+}
+ 
+/* correct font weight in Chrome, Edge, and Safari. */
+b,
+strong {
+  font-weight: bolder;
+}
+/*
+ * IE 10 激活转态有背景色
+ * 去掉默认的下划线
+ */
+a{
+  text-decoration: none;
+  background-color: transparent;
+  color: #000;
+}
+/* IE 10 下img有border */
+img {
+  border-style: none;
+}
+table {
+  border-collapse: collapse;
+  table-layout: fixed; 
+}
+ 
+/* form 表单元素 */
+input{
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+input::-webkit-input-placeholder{
+  color: #ccc;
+}
+input::-ms-input-placeholder{
+  color: #ccc;
+}
+input::-moz-placeholder{
+  color: #ccc;
+}
+input[type=submit],input[type=button]{
+  cursor: pointer;
+}
+button[disabled], input[disabled] {
+  cursor: default;
+}
+button{
+  outline: none;
+  border: none;
+  background-color: transparent;
+}
+ 
+/*浮动相关*/
+.fl {
+  float: left !important;
+}
+.fr {
+  float: right !important;
+}
+.fn {
+  float: none !important;
+}
+.clearfix::after {
+  display: block;
+  clear: both;
+  content: "";
+}
