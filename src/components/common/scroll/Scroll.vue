@@ -37,22 +37,35 @@
       })
 
       // 2. 监听滚动得位置
-      this.scroll.on('scroll', (position) =>{
-        // console.log(position);
-        this.$emit('scroll',position);
-      })
+      if(this.probeType === 2 || this.probeType === 3){
+        this.scroll.on('scroll', (position) =>{
+          // console.log(position);
+          this.$emit('scroll',position);
+        })
+      }
+      
 
-      //3. 监听上拉事件
-      this.scroll.on('pullingUp', () =>{
-        this.$emit('pullingUp')
-      })
+      // 3.监听 scroll 滚动到底部
+      if( this.pullUpLoad ) {
+        this.scroll.on('pullingUp', () => {
+          this.$emit('pullingUp');
+        });
+      }
+
+      
     },
     methods: {
       scrollTo(x, y, time=300) {
-        this.scroll.scrollTo(x, y, time);
+        this.scroll && this.scroll.scrollTo && this.scroll.scrollTo(x, y, time);
+      },
+      refresh() { 
+        this.scroll && this.scroll.refresh();
       },
       finishPullUp() {
-        this.scroll.finishPullUp();
+        this.scroll && this.scroll.finishPullUp();
+      },
+      getScrollY() {
+        return this.scroll ? this.scroll.y : 0;
       }
     }
   }
