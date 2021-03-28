@@ -1,18 +1,21 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav"/>
+    <detail-nav-bar class="detail-nav" @titleClick="titleClick" ref="nav"/>
 
-    <scroll class="content" ref="scroll">
+    <scroll class="content" 
+    ref="scroll" :probe-type="3" @scroll="contentScroll">
       <detail-swiper :top-images="topImages"/>
       <detail-base-info :goods="goods"/>
       <detail-shop-info :shop="shop"/>
       <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"/>
-      <detail-param-info :param-info="paramInfo"/>
-      <detail-comment-info :comment-info="commentInfo" />
+      <detail-param-info ref="params" :param-info="paramInfo"/>
+      <detail-comment-info ref="comment" :comment-info="commentInfo" />
 
-      <goods-list :goods="recommends" />
+      <goods-list ref="recommend" :goods="recommends" />
     </scroll>
     
+    <detail-bottom-bar @addCart="addToCart"/>
+    <back-top @click.native="backClick" v-show="isShowBackTop"/>
     <h2>详情页 {{iid}}</h2>
   </div>
 </template>
@@ -27,12 +30,15 @@
   import DetailParamInfo from './childComps/DetailParamInfo';
   import DetailCommentInfo from './childComps/DetailCommentInfo';
   import DetailRecommendInfo from './childComps/DetailRecommendInfo';
-
+  import DetailBottomBar from "./childComps/DetailBottomBar";
 
   import Scroll from 'components/common/scroll/Scroll';
   import GoodsList from 'components/content/goods/GoodsList';
 
   import { getDetail, Goods, Shop, GoodsParam, getRecommend } from 'network/detail';
+  import { debounce } from 'common/utils';
+  import { itemListenerMixin, backTopMixin } from 'common/mixin';
+
 
   export default {
     name: 'Detail',
@@ -45,6 +51,7 @@
       DetailParamInfo,
       DetailCommentInfo,
       DetailRecommendInfo,
+      DetailBottomBar,
 
       Scroll,
       GoodsList
@@ -58,9 +65,13 @@
         detailInfo: {},
         paramInfo: {},
         commentInfo: {},
-        recommends: []
+        recommends: [],
+        themeTopYs: [],
+        getThemeTopY: null,
+        currentIndex: 0,
       }
     },
+    mixins: [itemListenerMixin, backTopMixin],
     created() {
       // 1. 保存传入的 iid
       this.iid = this.$route.params.iid;
@@ -93,10 +104,63 @@
       getRecommend().then(res => {
         this.recommends = res.data.list;
       })
+
+      // 4. 给 getThemeTopY 赋值
+      this.getThemeTopY = debounce(() => {
+        this.themeTopYs = []
+        this.themeTopYs.push(0);
+        this.themeTopYs.push(this.$refs.params.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.recommend.$el.offsetTop);
+      },100)
+      
     },
+    
+
     methods: {
       imageLoad() {
         this.$refs.scroll.refresh();
+        this.getThemeTopY();
+      },
+      titleClick(index) {
+        this.$refs.scroll.scrollTo(0, -this.themeTopYs[index]+44, 500);
+      },
+      contentScroll(position) {
+        const positionY = -position.y+44;
+        for (let i = 0; i < this.themeTopYs.length; i++) {
+          //console.log(i); //str 下面 i+ 1会有问题
+          // if(positionY > this.themeTopYs[i] && positionY < this.themeTopYs[i + 1]) {
+          //
+          // }
+          let length = this.themeTopYs.length;
+          if(this.currentIndex !== i
+            && ((i < length - 1 && positionY >= this.themeTopYs[i]
+            && positionY < this.themeTopYs[i + 1])
+            || (i === length -1 && positionY >= this.themeTopYs[i]))) {
+            //对于上面一长串的范围判断使用this.themeTopYs.push(Number.MAX.VALUE);
+            //这样可以省去 || 之后的判断代码
+            this.currentIndex = i;
+            this.$refs.nav.currentIndex = this.currentIndex;
+          }
+        }
+
+        //是否显示回到顶部
+        this.isShowBackTop = (-position.y) > 1000;
+      },
+      addToCart() {
+        // 1. 获取购物车想要展示的信息
+        const product = {};
+        product.image = this.topImages[0];
+        product.title = this.goods.title;
+        product.desc = this.goods.desc;
+        product.iid = this.iid;
+        product.price = this.goods.realPrice;
+
+        // 2. 将商品添加到购物车里
+        // this.$store.cartList.push(product);
+        // this.$store.commit('addCart', product);
+        this.$store.dispatch('addCart',product);
+
       }
     }
   }
@@ -117,6 +181,6 @@
   }
 
   .content {
-    height: calc(100% - 44px);
+    height: calc(100% - 44px - 58px);
   }
 </style>

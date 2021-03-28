@@ -33,10 +33,10 @@
   import TabControl from 'components/content/tabControl/TabControl';
   import GoodsList from 'components/content/goods/GoodsList';
   import Scroll from 'components/common/scroll/Scroll';
-  import BackTop from 'components/content/backTop/BackTop';
 
   import { getHomeMultidata, getHomeGoods } from "network/home";
   import { debounce } from 'common/utils';
+  import { itemListenerMixin, backTopMixin } from 'common/mixin';
 
   export default {
     name: "Home",
@@ -49,9 +49,8 @@
       TabControl,
       GoodsList,
       Scroll,
-      BackTop
     },
-
+    mixins: [itemListenerMixin,backTopMixin],
     data() {
       return {
         banners: [],
@@ -62,7 +61,6 @@
           'sell': { page:0, list: [] }  // 精选
         },
         currentType: 'pop',
-        isShowBackTop: false,
         tabOffsetTop: 0,
         isTabFixed: false,
         saveY: 0
@@ -97,14 +95,6 @@
     },
 
     mounted() {
-      // 图片加载完成的时间监听
-      // 监听 item 中图片加载完成
-      const refresh = debounce(this.$refs.scroll.refresh, 50);
-      this.$bus.$on('itemIamgeLoad', () => {
-        refresh();
-      });
-
-      
     },
 
     methods: {
@@ -125,10 +115,6 @@
         }
         this.$refs.tabControl1.currentIndex = index;
         this.$refs.tabControl2.currentIndex = index;
-      },
-      // 回到顶部点击
-      backClick() {
-        this.$refs.scroll.scrollTo(0, 0, 1000); 
       },
       // 回到顶部图标的显示和隐藏
       contentScroll(position) {
