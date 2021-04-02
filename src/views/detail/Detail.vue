@@ -16,7 +16,8 @@
     
     <detail-bottom-bar @addCart="addToCart"/>
     <back-top @click.native="backClick" v-show="isShowBackTop"/>
-    <h2>详情页 {{iid}}</h2>
+
+
   </div>
 </template>
  
@@ -34,11 +35,13 @@
 
   import Scroll from 'components/common/scroll/Scroll';
   import GoodsList from 'components/content/goods/GoodsList';
+  import BackTop from "components/content/backTop/BackTop";
 
   import { getDetail, Goods, Shop, GoodsParam, getRecommend } from 'network/detail';
   import { debounce } from 'common/utils';
   import { itemListenerMixin, backTopMixin } from 'common/mixin';
 
+  import { mapActions } from 'vuex';
 
   export default {
     name: 'Detail',
@@ -54,7 +57,8 @@
       DetailBottomBar,
 
       Scroll,
-      GoodsList
+      GoodsList,
+      BackTop
     },
     data() {
       return {
@@ -118,6 +122,9 @@
     
 
     methods: {
+      //可以使用对象方式 'add':'addCart'
+      ...mapActions(['addCart']),
+
       imageLoad() {
         this.$refs.scroll.refresh();
         this.getThemeTopY();
@@ -159,8 +166,11 @@
         // 2. 将商品添加到购物车里
         // this.$store.cartList.push(product);
         // this.$store.commit('addCart', product);
-        this.$store.dispatch('addCart',product);
+        this.$store.dispatch('addCart',product).then(res => {
+          this.$toast.show(res, 2000);
+        });
 
+        //将上面 的方法影射到本组件内部(利用mapActions
       }
     }
   }

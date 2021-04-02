@@ -35,13 +35,13 @@
 
 <style scoped>
   .bottom-bar {
-    height: 58 px;
+    height: 58px;
     position: fixed;
     background-color: #fff;
     left: 0;
     right: 0;
     bottom: 0;
-
+    z-index: 9;
     display: flex;
     text-align: center;
     box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.3);
