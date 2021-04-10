@@ -100,6 +100,7 @@
 
   .info-bottom .item-price {
     color: orangered;
+    float: right;
   }
 
 </style>

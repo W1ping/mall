@@ -1,145 +1,220 @@
 <template>
-  <div class="wrapper" ref="aaaa">
-    <ul class="content">
-    <li>分类1</li>
-    <li>分类2</li>
-    <li>分类3</li>
-    <li>分类4</li>
-    <li>分类5</li>
-    <li>分类6</li>
-    <li>分类7</li>
-    <li>分类8</li>
-    <li>分类9</li>
-    <li>分类10</li>
-    <li>分类11</li>
-    <li>分类12</li>
-    <li>分类13</li>
-    <li>分类14</li>
-    <li>分类15</li>
-    <li>分类16</li>
-    <li>分类17</li>
-    <li>分类18</li>
-    <li>分类19</li>
-    <li>分类20</li>
-    <li>分类21</li>
-    <li>分类22</li>
-    <li>分类23</li>
-    <li>分类24</li>
-    <li>分类25</li>
-    <li>分类26</li>
-    <li>分类27</li>
-    <li>分类28</li>
-    <li>分类29</li>
-    <li>分类30</li>
-    <li>分类31</li>
-    <li>分类32</li>
-    <li>分类33</li>
-    <li>分类34</li>
-    <li>分类35</li>
-    <li>分类36</li>
-    <li>分类37</li>
-    <li>分类38</li>
-    <li>分类39</li>
-    <li>分类40</li>
-    <li>分类41</li>
-    <li>分类42</li>
-    <li>分类43</li>
-    <li>分类44</li>
-    <li>分类45</li>
-    <li>分类46</li>
-    <li>分类47</li>
-    <li>分类48</li>
-    <li>分类49</li>
-    <li>分类50</li>
-    <li>分类51</li>
-    <li>分类52</li>
-    <li>分类53</li>
-    <li>分类54</li>
-    <li>分类55</li>
-    <li>分类56</li>
-    <li>分类57</li>
-    <li>分类58</li>
-    <li>分类59</li>
-    <li>分类60</li>
-    <li>分类61</li>
-    <li>分类62</li>
-    <li>分类63</li>
-    <li>分类64</li>
-    <li>分类65</li>
-    <li>分类66</li>
-    <li>分类67</li>
-    <li>分类68</li>
-    <li>分类69</li>
-    <li>分类70</li>
-    <li>分类71</li>
-    <li>分类72</li>
-    <li>分类73</li>
-    <li>分类74</li>
-    <li>分类75</li>
-    <li>分类76</li>
-    <li>分类77</li>
-    <li>分类78</li>
-    <li>分类79</li>
-    <li>分类80</li>
-    <li>分类81</li>
-    <li>分类82</li>
-    <li>分类83</li>
-    <li>分类84</li>
-    <li>分类85</li>
-    <li>分类86</li>
-    <li>分类87</li>
-    <li>分类88</li>
-    <li>分类89</li>
-    <li>分类90</li>
-    <li>分类91</li>
-    <li>分类92</li>
-    <li>分类93</li>
-    <li>分类94</li>
-    <li>分类95</li>
-    <li>分类96</li>
-    <li>分类97</li>
-    <li>分类98</li>
-    <li>分类99</li>
-    <li>分类100</li>
-  </ul>
+  <div class="category">
+<!--    导航-->
+    <nav-bar class="nav-bar">
+      <div slot="center">商品分类</div>
+    </nav-bar>
+    <tab-control :titles="['综合', '新品', '销量']"
+                 @tabClick="tabClick"
+                 ref="tabControl1"
+                 class="tab-control"
+                 v-show="isTabFixed"/>
+    <div class="content">
+      <category-menu :categories="categories"
+                     @selectItem="selectItem"></category-menu>
+      <scroll id="tab-content"
+              :data="[categoryData]"
+              :probe-type="3"
+              @scroll="contentScroll"
+              ref="scroll">
+        <div>
+          <category-content :subcategories="showSubcategory"></category-content>
+          <!-- <tab-control :titles="['综合','新品','销量']"
+                       @tabClick="tabClick"
+                       ref="tabControl2"
+                       >
+          </tab-control> -->
+          <goods-list :goods="showCategoryDetail"></goods-list>
+        </div>
+      </scroll>
+    </div>
+
+    <back-top v-show="isShowBackTop" @click.native="backClick"></back-top>
   </div>
 </template>
 
 <script>
-  import BScroll from 'better-scroll';
+  import CategoryMenu from "./childComps/CategoryMenu";
+  import CategoryContent from "./childComps/CategoryContent";
+
+  import NavBar from "components/common/navbar/NavBar";
+
+  import Scroll from "components/common/scroll/Scroll";
+  import GoodsList from "components/content/goods/GoodsList";
+
+  import {POP, NEW, SELL, TOP_DISTANCE} from "common/const";
+  import {getCategory, getSubcategory, getCategoryDetail} from "network/category";
+  import {itemListenerMixin, backTopMixin, tabControlMixin} from "common/mixin";
 
   export default {
     name: "Category",
-    data() {
+    components: {
+      CategoryMenu,
+      NavBar,
+      CategoryContent,
+      // TabControl,
+      // BackTop,
+      Scroll,
+      GoodsList
+    },
+    mixins: [itemListenerMixin, backTopMixin, tabControlMixin],
+    data(){
       return {
-        scroll: null
+        categories: [],
+        categoryData: {},
+        scroll: null,
+        isTabFixed: false,
+        currentIndex: -1,
+        currentType: POP,
+        saveY: 0,
+        tabOffsetTop: 0
       }
     },
-
-    // 组件创建完后调用
+    computed: {
+      showSubcategory() {
+        if(this.currentIndex === -1) {
+          return {}
+        }
+        return this.categoryData[this.currentIndex].subcategories;
+      },
+      showCategoryDetail() {
+        if(this.currentIndex === -1) {
+          return [];
+        }
+        return this.categoryData[this.currentIndex].categoryDetail[this.currentType];
+      }
+    },
+    created() {
+      //请求分类数据
+      this._getCategory();
+    },
     mounted() {
-      this.scroll = new BScroll(document.querySelector('.wrapper'),{
-        probeType: 3,
-        pullUpLoad: true,     // 上拉加载更多
+      this.$bus.$on('gridViewImgLoad', () => {
+        //refresh重新计算better-scroll,   this.$refs.scroll：组件创建完成才能执行后面函数
+        this.refresh();
+        this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop;
+        this.tabOffsetLeft = this.$refs.scroll.$el.offsetLeft;
       })
+    },
+    activated() {
+      //一进入组件就滚动到离开时保存的位置
+      this.$refs.scroll && this.$refs.scroll.scrollTo(0, this.saveY, 10);
+      //refresh
+      this.$refs.scroll && this.$refs.scroll.refresh();
+    },
+    deactivated() {
+      //保存离开时的位置
+      this.saveY = this.$refs.scroll.getScrollY();
 
-      this.scroll.on('scroll', (position) => {  // 监听滚动距离
-        // console.log(position)；
-      })
+      // 2、取消全局事件监听
+      this.$bus.$off('itemImgLoad', this.itemImgListener);
 
-      this.scroll.on('pullingUp', () => {
-        console.log('上拉加载更多');
-        
-      })
+    },
+    methods: {
+      /**
+       * 事件相应相关方法
+       */
+      //tabControl的点击，mixin里的tabClick发生点击事件并调用此方法
+      _tabClick(index) {
+        this.$refs.tabControl1.currentIndex = index;
+      },
+      //监听点击了那个分类栏目
+      selectItem(index) {
+        this._getSubCategories(index);
+      },
+      //监听滚动的位置（使用scroll组件传过来的事件）
+      contentScroll(position) {
+        //监听BackTop是否显示
+        this.isShowBackTop = position.y < TOP_DISTANCE;
+
+        //判断tabControl是否需要吸顶
+        this.isTabFixed = this.tabOffsetTop <= (-position.y);
+      },
+      /**
+       * 网络请求额相关法
+       */
+      //1、拿到分类数据
+      _getCategory() {
+        getCategory().then(res => {
+          // console.log(res.data);
+          //保存分类数据
+          this.categories = res.data.category.list;
+          //初始化每个类别的子数据
+          for(let i = 0; i < this.categories.length; i++) {
+            this.categoryData[i] = {
+              subcategories: {},
+              categoryDetail: {
+                'pop': [],
+                'new': [],
+                'sell': []
+              }
+            }
+          }
+          //请求第一个分类的数据
+          // this._getSubCategories(0);
+        })
+      },
+      //根据分类栏的下标去请求相应的数据
+      _getSubCategories(index) {
+        this.currentIndex = index;
+        const mailKey = this.categories[index].maitKey;
+        getSubcategory(mailKey).then(res => {
+          this.categoryData[index].subcategories = res.data;
+
+          this.categoryData = {...this.categoryData};
+          this._getCategoryDetail(POP)
+          this._getCategoryDetail(SELL)
+          this._getCategoryDetail(NEW)
+        })
+      },
+      //3、根据类型请求相应的商品数据（pop,new,sell）
+      _getCategoryDetail(type) {
+        //获取请求的minWallkey
+        const miniWallkey = this.categories[this.currentIndex].miniWallkey;
+        //发送请求,传入miniWallkey和type
+        getCategoryDetail(miniWallkey, type).then(res => {
+          
+          //将获取的数据保存下来
+          this.categoryData[this.currentIndex].categoryDetail[type] = res;
+          this.categoryData = {...this.categoryData};
+        })
+      }
     }
   }
 </script>
 
 <style scoped>
-  .wrapper {
-    height: 150px;
-    background-color: red;
+  .category {
+    height: 100%;
+  }
 
+  .nav-bar {
+    position: relative;
+    background-color: var(--color-tint);
+    color: #fff;
+    font-weight: 700;
+    z-index: 3;
+  }
+
+  .content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 44px;
+    bottom: 49px;
+    display: flex;
+  }
+
+  #tab-content {
     overflow: hidden;
+    height: calc(100vh - 49px - 44px);
+    flex: 1;
+  }
+
+  .tab-control {
+    position: absolute;
+    width: calc(100% - 54px);
+    z-index: 3;
+    right: 0;
   }
 </style>
